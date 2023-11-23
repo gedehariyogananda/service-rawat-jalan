@@ -14,4 +14,9 @@ class Kunjungan extends Model
     {
         return $this->belongsTo(Pasien::class);
     }
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
 }

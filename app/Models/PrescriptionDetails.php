@@ -14,7 +14,7 @@ class PrescriptionDetails extends Model
     {
         return $this->belongsTo(Drugs::class, 'drug_id')->first();
     }
-    
+
     public function prescription()
     {
         return $this->belongsTo(Prescriptions::class, 'prescription_id')->first();

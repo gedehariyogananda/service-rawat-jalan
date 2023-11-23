@@ -9,4 +9,5 @@ class Pasien extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+
 }
