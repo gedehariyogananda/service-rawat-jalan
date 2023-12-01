@@ -112,7 +112,6 @@ class RawatjalanController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'id' => ['required'],
                 'user_id' => ['required'],
                 'room_id' => ['required'],
                 'poli_id' => ['required'],
@@ -126,9 +125,9 @@ class RawatjalanController extends Controller
                 ], 400);
             }
 
-            $submission = $this->detailKunjungan->where('id', $request->id)->update($request->all());
+            $submission = $this->detailKunjungan->where('id', $id)->update($request->all());
 
-            $theData = $this->detailKunjungan->where('id', $request->id)->first();
+            $theData = $this->detailKunjungan->where('id', $id)->first();
 
             if ($submission) {
                 return response()->json([
