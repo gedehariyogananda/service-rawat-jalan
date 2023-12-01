@@ -10,4 +10,8 @@ class Pasien extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
+    public function detailkunjungans(){
+        return $this->hasMany(DetailKunjungan::class);
+    }
+
 }

@@ -47,10 +47,15 @@ class RawatjalanController extends Controller
             $mappedData = $rawatjalan->map(function ($detail) {
                 return [
                     'id' => $detail->id,
-                    'nama' => $detail->kunjungan->pasien->nama,
-                    'jadwal' => date('d F Y', strtotime($detail->kunjungan->tanggal_kunjungan)),
-                    'room' => $detail->room->name_room,
-                    'penanganan' => $detail->user->name,
+                    'nama' => $detail->kunjungan->pasien ? $detail->kunjungan->pasien->nama : null,
+                    'jadwal' => $detail->kunjungan ? date('d F Y', strtotime($detail->kunjungan->tanggal_kunjungan)) : '-',
+                    'room' => $detail->room ? $detail->room->name_room : null,
+                    'penanganan' => $detail->user ? $detail->user->roles  . ' ' . $detail->user->name : null,
+                    'poli' => $detail->poli ? $detail->poli->name_poli : null,
+                    'diagnosa' => $detail->diagnosa,
+                    'resep' => $detail->resep,
+                    'nota_apotek' => $detail->apotek_id,
+                    'pembayaran' => $detail->pembayaran,
                 ];
             });
 
@@ -58,47 +63,6 @@ class RawatjalanController extends Controller
                 'status' => 'success',
                 'message' => 'Data berhasil Get',
                 'data' => $mappedData,
-            ], 202);
-        } catch (\Throwable $th) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Internal Server Error',
-                'error' => $th->getMessage(),
-            ], 500);
-        }
-    }
-
-    // view data per id (get)
-    public function getDataKunjunganById($id)
-    {
-        try {
-            $rawatjalan = $this->detailKunjungan->with('kunjungan', 'pasien', 'room', 'user', 'poli')
-                ->where('id', $id)->first();
-
-            if (!$rawatjalan) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Data tidak ditemukan',
-                ], 404);
-            }
-
-            $data = [
-                'id' => $rawatjalan->id,
-                'nama' => $rawatjalan->kunjungan->pasien->nama,
-                'jadwal' => $rawatjalan->kunjungan ? date('d F Y', strtotime($rawatjalan->kunjungan->tanggal_kunjungan)) : null,
-                'room' => $rawatjalan->room->name_room,
-                'penanganan' => $rawatjalan->user->name,
-                'poli' => $rawatjalan->poli->name_poli,
-                'diagnosa' => $rawatjalan->diagnosa,
-                'resep' => $rawatjalan->resep,
-                'nota_apotek' => $rawatjalan->apotek_id,
-                'pembayaran' => $rawatjalan->pembayaran,
-            ];
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Data berhasil Get',
-                'data' => $data,
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
@@ -108,7 +72,6 @@ class RawatjalanController extends Controller
             ], 500);
         }
     }
-
 
     // get data kunjungan (get)
     public function addDataKunjungan($id)
@@ -145,7 +108,7 @@ class RawatjalanController extends Controller
     }
 
     // add data submisson kunjungan (patch)
-    public function addDataSubmission(Request $request)
+    public function addDataSubmission($id, Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -189,11 +152,10 @@ class RawatjalanController extends Controller
     }
 
     // add resep (patch)
-    public function addDiagnosaResep(Request $request)
+    public function addDiagnosaResep($id, Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
-                'id' => ['required'],
                 'diagnosa' => ['required'],
                 'resep' => ['required'],
             ]);
@@ -206,9 +168,9 @@ class RawatjalanController extends Controller
                 ], 400);
             }
 
-            $submission = $this->detailKunjungan->where('id', $request->id)->update($request->all());
+            $submission = $this->detailKunjungan->where('id', $id)->update($request->all());
 
-            $theData = $this->detailKunjungan->where('id', $request->id)->first();
+            $theData = $this->detailKunjungan->where('id', $id)->first();
 
             if ($submission) {
                 return response()->json([
@@ -235,7 +197,7 @@ class RawatjalanController extends Controller
     public function getUpdateKunjungan($id)
     {
         try {
-            $data = $this->detailKunjungan->find($id);
+            $data = $this->detailKunjungan->with('kunjungan', 'pasien', 'room', 'user', 'poli')->find($id);
             $dataYangMenangani = $data->user_id;
 
             $dokterID = range(5, 17);
@@ -251,9 +213,18 @@ class RawatjalanController extends Controller
                     'status' => 'success',
                     'message' => 'Data succes get',
                     'data' => [
+                        'nama' => $data->kunjungan->pasien->nama,
                         'yangMenangani' => $dataYangMenangani,
                         'dataPoli' => $this->dataPoli,
-                        'dataRoom' => $this->dataRoom
+                        'dataRoom' => $this->dataRoom,
+                        'dataDiagnosa' => $data->diagnosa,
+                        'dataResep' => $data->resep,
+                        'dokterNama' =>  $data->user->roles . " - " . $data->user->name,
+                        'dokterId' => $data->user->id,
+                        'roomNama' => $data->room->name_room,
+                        'roomId' => $data->room->id,
+                        'poliNama' => $data->poli->name_poli,
+                        'poliId' => $data->poli->id,
                     ]
                 ], 202);
             } else {
@@ -272,11 +243,10 @@ class RawatjalanController extends Controller
     }
 
     // update kunjungan (patch)
-    public function updateKunjungan(Request $request)
+    public function updateKunjungan($id, Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
-                'id' => ['required'],
                 'user_id' => ['min:1'],
                 'diagnosa' => ['min:1'],
                 'resep' => ['min:1'],
@@ -292,9 +262,9 @@ class RawatjalanController extends Controller
                 ], 400);
             }
 
-            $submission = $this->detailKunjungan->where('id', $request->id)->update($request->all());
+            $submission = $this->detailKunjungan->where('id', $id)->update($request->all());
 
-            $theData = $this->detailKunjungan->where('id', $request->id)->first();
+            $theData = $this->detailKunjungan->where('id', $id)->first();
 
             if ($submission) {
                 return response()->json([
@@ -353,10 +323,15 @@ class RawatjalanController extends Controller
             $mappedData = $rawatjalan->map(function ($detail) {
                 return [
                     'id' => $detail->id,
-                    'nama' => $detail->kunjungan->pasien->nama,
-                    'jadwal' => date('d F Y', strtotime($detail->kunjungan->tanggal_kunjungan)),
-                    'room' => $detail->room->name_room,
-                    'penanganan' => $detail->user->name,
+                    'nama' => $detail->kunjungan->pasien ? $detail->kunjungan->pasien->nama : null,
+                    'jadwal' => $detail->kunjungan ? date('d F Y', strtotime($detail->kunjungan->tanggal_kunjungan)) : '-',
+                    'room' => $detail->room ? $detail->room->name_room : null,
+                    'penanganan' => $detail->user ? $detail->user->roles  . ' ' . $detail->user->name : null,
+                    'poli' => $detail->poli ? $detail->poli->name_poli : null,
+                    'diagnosa' => $detail->diagnosa,
+                    'resep' => $detail->resep,
+                    'nota_apotek' => $detail->apotek_id,
+                    'pembayaran' => $detail->pembayaran,
                 ];
             });
 
@@ -383,10 +358,15 @@ class RawatjalanController extends Controller
             $mappedData = $rawatjalan->map(function ($detail) {
                 return [
                     'id' => $detail->id,
-                    'nama' => $detail->kunjungan->pasien->nama,
-                    'jadwal' => date('d F Y', strtotime($detail->kunjungan->tanggal_kunjungan)),
-                    'room' => $detail->room->name_room,
-                    'penanganan' => $detail->user->name,
+                    'nama' => $detail->kunjungan->pasien ? $detail->kunjungan->pasien->nama : null,
+                    'jadwal' => $detail->kunjungan ? date('d F Y', strtotime($detail->kunjungan->tanggal_kunjungan)) : '-',
+                    'room' => $detail->room ? $detail->room->name_room : null,
+                    'penanganan' => $detail->user ? $detail->user->roles  . ' ' . $detail->user->name : null,
+                    'poli' => $detail->poli ? $detail->poli->name_poli : null,
+                    'diagnosa' => $detail->diagnosa,
+                    'resep' => $detail->resep,
+                    'nota_apotek' => $detail->apotek_id,
+                    'pembayaran' => $detail->pembayaran,
                 ];
             });
 
