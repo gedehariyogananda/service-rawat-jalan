@@ -4,15 +4,15 @@ $router->group(['prefix' => 'kunjungan'], function () use ($router) {
     $router->get('/{id}', 'RawatjalanController@getDataKunjunganById');
     $router->get('/get-submission-data/{id}', 'RawatjalanController@addDataKunjungan');
     $router->patch('/add-data-submission/{id}', 'RawatjalanController@addDataSubmission');
-    $router->patch('/add-diagnosa-resep/{id}', 'RawatJalanController@addDiagnosaResep');
-    $router->get('/get-update-kunjungan/{id}', 'RawatJalanController@getUpdateKunjungan');
-    $router->patch('/update-result-kunjungan/{id}', 'RawatJalanController@updateKunjungan');
-    $router->delete('/delete-kunjungan/{id}', 'RawatJalanController@deleteKunjungan');
-    $router->get('/sorting/sudah-pemeriksaan', 'RawatJalanController@getKunjunganSudahPemeriksaan');
-    $router->get('/sorting/belum-pemeriksaan', 'RawatJalanController@getKunjunganBelumPemeriksaan');
+    $router->patch('/add-diagnosa-resep/{id}', 'RawatjalanController@addDiagnosaResep');
+    $router->get('/get-update-kunjungan/{id}', 'RawatjalanController@getUpdateKunjungan');
+    $router->patch('/update-result-kunjungan/{id}', 'RawatjalanController@updateKunjungan');
+    $router->delete('/delete-kunjungan/{id}', 'RawatjalanController@deleteKunjungan');
+    $router->get('/sorting/sudah-pemeriksaan', 'RawatjalanController@getKunjunganSudahPemeriksaan');
+    $router->get('/sorting/belum-pemeriksaan', 'RawatjalanController@getKunjunganBelumPemeriksaan');
 });
 
 $router->group(['prefix' => 'set'], function () use ($router) {
-    $router->get('/pemeriksaan', 'RawatJalanController@getSetPemeriksaan');
-    $router->get('/pemeriksaan/apotik/{id}', 'RawatJalanController@setPemeriksaan');
+    $router->get('/pemeriksaan', 'RawatjalanController@getSetPemeriksaan');
+    $router->get('/pemeriksaan/apotik/{id}', 'RawatjalanController@setPemeriksaan');
 });
